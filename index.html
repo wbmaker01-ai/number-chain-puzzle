@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>수식 콤보 퍼즐 : 넘버 체인 (Number Chain Puyo)</title>
+    <meta name="description" content="초등학생을 위한 재미있는 뿌요뿌요 방식 수식 콤보 퍼즐 게임! 10을 만들어 터뜨리고 암산 능력을 키워보세요.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+KR:wght@400;600;700;800&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-background">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="game-container">
+        <!-- Header / Logo -->
+        <header class="game-header">
+            <h1 class="logo-title">
+                <span class="highlight-num">10</span> 넘버 체인 퍼즐
+            </h1>
+            <p class="logo-subtitle">숫자를 더해 10을 만들고 연속 콤보를 완성하세요!</p>
+        </header>
+
+        <!-- Main Game Layout -->
+        <main class="game-layout">
+            <!-- Left Panel: Stats & Info -->
+            <aside class="panel left-panel">
+                <div class="card stat-card">
+                    <span class="stat-label">SCORE</span>
+                    <div class="stat-value" id="score-display">0</div>
+                </div>
+
+                <div class="card stat-card level-card">
+                    <span class="stat-label">LEVEL</span>
+                    <div class="stat-value" id="level-display">Lv.1</div>
+                </div>
+
+                <div class="card stat-card combo-card">
+                    <span class="stat-label">MAX COMBO</span>
+                    <div class="stat-value" id="max-combo-display">0</div>
+                </div>
+
+                <div class="card target-card">
+                    <span class="stat-label">목표 수합</span>
+                    <div class="target-badge" id="target-sum-display">10</div>
+                </div>
+
+                <div class="card stat-card">
+                    <span class="stat-label">연산 성공 횟수</span>
+                    <div class="stat-value small-stat" id="clear-count-display">0회</div>
+                </div>
+            </aside>
+
+            <!-- Center Panel: Canvas Board -->
+            <section class="board-section">
+                <div class="canvas-wrapper" id="canvas-wrapper">
+                    <canvas id="game-canvas" width="360" height="640"></canvas>
+                    
+                    <!-- Floating Overlay for Combo Announcer -->
+                    <div id="combo-popup" class="combo-popup hidden">
+                        <span class="combo-text" id="combo-text">2 COMBO!</span>
+                        <span class="combo-subtext" id="combo-subtext">GREAT MATH!</span>
+                    </div>
+
+                    <!-- Overlay Screens -->
+                    <div id="start-overlay" class="overlay">
+                        <div class="overlay-content">
+                            <h2>🎮 수식 콤보 퍼즐</h2>
+                            <p class="overlay-desc">인접한 숫자들의 합이 <b id="start-target-desc">10</b>이 되면 터져요!<br>연속으로 터뜨려 대량 득점에 도전하세요!</p>
+                            
+                            <div class="difficulty-selector">
+                                <label>난이도 선택:</label>
+                                <div class="diff-buttons">
+                                    <button class="diff-btn active" data-diff="easy">
+                                        <span class="diff-title">🟢 연습 게임</span>
+                                        <span class="diff-desc">합 10 (숫자 1~5, 1만점 목표)</span>
+                                    </button>
+                                    <button class="diff-btn" data-diff="normal">
+                                        <span class="diff-title">🟡 보통</span>
+                                        <span class="diff-desc">합 10 (숫자 1~9)</span>
+                                    </button>
+                                    <button class="diff-btn" data-diff="hard">
+                                        <span class="diff-title">🔴 매운맛</span>
+                                        <span class="diff-desc">합 20 (숫자 1~9)</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button id="btn-start" class="btn-primary">게임 시작하기</button>
+                        </div>
+                    </div>
+
+                    <div id="pause-overlay" class="overlay hidden">
+                        <div class="overlay-content">
+                            <h2>⏸️ 일시 정지</h2>
+                            <button id="btn-resume" class="btn-primary">이어서 하기</button>
+                            <button id="btn-restart-pause" class="btn-secondary">처음부터 다시</button>
+                            <button id="btn-home-pause" class="btn-secondary">🏠 홈 화면으로</button>
+                        </div>
+                    </div>
+
+                    <div id="gameover-overlay" class="overlay hidden">
+                        <div class="overlay-content">
+                            <h2 id="gameover-title">💥 GAME OVER</h2>
+                            <p class="overlay-desc hidden" id="tutorial-clear-msg">🎉 축하합니다. 튜토리얼이 종료되었습니다.<br><b>보통모드</b>에 도전해 보세요!</p>
+                            <p class="gameover-score-label">최종 점수</p>
+                            <div class="final-score" id="final-score">0</div>
+                            <p class="gameover-stats" id="final-stats">최대 콤보: 0회 | 암산 성공: 0회</p>
+                            <button id="btn-restart" class="btn-primary">다시 도전하기</button>
+                            <button id="btn-open-leaderboard-gameover" class="btn-secondary">🏆 리더보드 보기</button>
+                            <button id="btn-home-gameover" class="btn-secondary">🏠 홈 화면으로</button>
+                        </div>
+                    </div>
+
+                    <!-- Register Leaderboard Modal (10,000pt Clear) -->
+                    <div id="register-leaderboard-overlay" class="overlay hidden">
+                        <div class="overlay-content">
+                            <h2>🏆 명예의 전당 등록!</h2>
+                            <p class="overlay-desc">축하합니다! <b>10,000점</b> 이상을 달성하셨습니다.<br>리더보드에 기재할 이름을 입력해 주세요!</p>
+                            <div class="register-form">
+                                <input type="text" id="leaderboard-name-input" placeholder="이름/닉네임 (최대 10자)" maxlength="10">
+                                <button id="btn-submit-score" class="btn-primary">점수 등록하기</button>
+                                <button id="btn-skip-score" class="btn-secondary sm">건너뛰기</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top 50 Leaderboard Modal -->
+                    <div id="leaderboard-modal" class="overlay hidden">
+                        <div class="overlay-content leaderboard-content">
+                            <h2><span id="admin-trophy-trigger" style="cursor:pointer;" title="히든 관리자">🏆</span> 명예의 전당<br>(Top 50)</h2>
+                            <div class="leaderboard-tab-buttons">
+                                <button class="lb-tab-btn active" data-tab="normal">🟡 보통맛</button>
+                                <button class="lb-tab-btn" data-tab="hard">🔴 매운맛</button>
+                            </div>
+                            <div class="leaderboard-table-wrapper">
+                                <table class="leaderboard-table">
+                                    <thead>
+                                        <tr>
+                                            <th>순위</th>
+                                            <th>이름</th>
+                                            <th>점수</th>
+                                            <th>최대 콤보</th>
+                                            <th class="admin-only hidden">관리</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboard-tbody">
+                                        <!-- JS Renders Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button id="btn-close-leaderboard" class="btn-primary">닫기</button>
+                        </div>
+                    </div>
+
+                    <!-- Hidden Admin Auth Overlay -->
+                    <div id="admin-auth-overlay" class="overlay hidden">
+                        <div class="overlay-content">
+                            <h2>🔐 관리자 인증</h2>
+                            <p class="overlay-desc">관리자 비밀번호를 입력해 주세요.</p>
+                            <div class="register-form">
+                                <input type="password" id="admin-password-input" placeholder="비밀번호 4자리">
+                                <button id="btn-submit-admin" class="btn-primary">확인</button>
+                                <button id="btn-close-admin" class="btn-secondary sm">취소</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- Right Panel: Next Piece, Controls & Settings -->
+            <aside class="panel right-panel">
+                <div class="card next-card">
+                    <span class="stat-label">NEXT BLOCK</span>
+                    <div class="next-canvas-wrapper">
+                        <canvas id="next-canvas" width="100" height="100"></canvas>
+                    </div>
+                </div>
+
+                <div class="card settings-card">
+                    <div class="toggle-row">
+                        <span>🔊 효과음</span>
+                        <button id="btn-sound-toggle" class="toggle-btn active">ON</button>
+                    </div>
+                    <div class="toggle-row">
+                        <span>💡 힌트 표시</span>
+                        <button id="btn-hint-toggle" class="toggle-btn active">ON</button>
+                    </div>
+                    <button id="btn-open-leaderboard" class="btn-secondary sm">🏆 랭킹 리더보드</button>
+                    <button id="btn-pause-toggle" class="btn-secondary sm">⏸️ 일시정지</button>
+                </div>
+
+                <div class="card guide-card">
+                    <span class="stat-label">조작 방법</span>
+                    <ul class="guide-list">
+                        <li><kbd>←</kbd> <kbd>→</kbd> 좌우 이동</li>
+                        <li><kbd>↓</kbd> 빠른 낙하</li>
+                        <li><kbd>Space</kbd> / <kbd>↑</kbd> 즉시 하강</li>
+                        <li><kbd>Z</kbd> / <kbd>X</kbd> 블록 회전</li>
+                    </ul>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Touch Controls for Mobile & Mouse -->
+        <footer class="touch-controls">
+            <div class="touch-row">
+                <button class="touch-btn" id="tbtn-rot-left">🔄 좌회전</button>
+                <button class="touch-btn" id="tbtn-rot-right">🔁 우회전</button>
+                <button class="touch-btn hard-drop-btn" id="tbtn-drop">⚡ 즉시하강</button>
+            </div>
+            <div class="touch-row">
+                <button class="touch-btn" id="tbtn-left">◀</button>
+                <button class="touch-btn" id="tbtn-down">▼</button>
+                <button class="touch-btn" id="tbtn-right">▶</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Firebase SDK (v10 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script src="game.js"></script>
+</body>
+</html>
