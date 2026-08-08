@@ -249,6 +249,9 @@ class Game {
         }
 
         document.getElementById('btn-submit-admin').addEventListener('click', () => this.authenticateAdmin());
+        document.getElementById('admin-password-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') this.authenticateAdmin();
+        });
         document.getElementById('btn-close-admin').addEventListener('click', () => {
             document.getElementById('admin-auth-overlay').classList.add('hidden');
         });
@@ -470,8 +473,8 @@ class Game {
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-        // Hash of '8582' = f3066a3b2b4898162234033b0e36365a6b0c268802951f50a3ebbc01b52d9b2e
-        if (hashHex === 'f3066a3b2b4898162234033b0e36365a6b0c268802951f50a3ebbc01b52d9b2e') {
+        // Hash of '8582' = 6e22bd4867cc0da43411dc1e912861738fdab4427a5efbc1e0b0a5e7d07f024f
+        if (hashHex === '6e22bd4867cc0da43411dc1e912861738fdab4427a5efbc1e0b0a5e7d07f024f') {
             this.isAdminMode = true;
             document.getElementById('admin-auth-overlay').classList.add('hidden');
             alert('🔓 관리자 인증에 성공했습니다! 리더보드 데이터 개별 삭제 권한이 활성화되었습니다.');
