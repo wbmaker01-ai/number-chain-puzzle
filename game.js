@@ -234,6 +234,12 @@ class Game {
             this.goHome();
         });
 
+        const homeMainBtn = document.getElementById('btn-home-main');
+        if (homeMainBtn) homeMainBtn.addEventListener('click', () => this.goHome());
+
+        const homeFloatBtn = document.getElementById('btn-home-floating');
+        if (homeFloatBtn) homeFloatBtn.addEventListener('click', () => this.goHome());
+
         // Leaderboard & Admin Triggers
         const openLbBtn = document.getElementById('btn-open-leaderboard');
         if (openLbBtn) openLbBtn.addEventListener('click', () => this.openLeaderboard());
@@ -711,18 +717,15 @@ class Game {
             this.lockCurrentPiece();
         } else {
             this.sound.playMove();
-            this.score += 1;
-            this.updateStatsUI();
         }
     }
 
     hardDrop() {
         if (!this.currentPiece) return;
         while (this.movePiece(0, 1)) {
-            this.score += 2;
+            // Drop without score increment
         }
         this.sound.playDrop();
-        this.updateStatsUI();
         this.lockCurrentPiece();
     }
 
