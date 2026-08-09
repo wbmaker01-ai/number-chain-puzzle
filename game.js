@@ -588,21 +588,13 @@ class Game {
 
     isMatchingDifficulty(item, targetDiff) {
         const itemDiff = item.difficulty;
-        const targetSum = item.targetSum;
 
         if (targetDiff === 'easy') {
-            // 'easy' (합 10) matches: explicit 'easy', legacy 'normal' (sum 10), or undefined difficulty
-            if (itemDiff === 'easy') return true;
-            if (!itemDiff || itemDiff === 'practice') return true;
-            if (itemDiff === 'normal' && (targetSum === 10 || !targetSum)) return true;
-            return false;
+            return itemDiff === 'easy' || itemDiff === 'practice' || !itemDiff;
         }
 
         if (targetDiff === 'normal') {
-            // new 'normal' (합 12) matches: 'normal_12' or 'normal' with targetSum === 12
-            if (itemDiff === 'normal_12') return true;
-            if (itemDiff === 'normal' && targetSum === 12) return true;
-            return false;
+            return itemDiff === 'normal' || itemDiff === 'normal_12';
         }
 
         if (targetDiff === 'hard') {
@@ -628,20 +620,7 @@ class Game {
         // 1) Fetch from Firestore if connected
         try {
             if (typeof db !== 'undefined' && db) {
-                let snapshot;
-                if (difficulty === 'easy') {
-                    // Fetch all to ensure legacy records without targetSum are preserved
-                    snapshot = await db.collection('leaderboard').get();
-                } else if (difficulty === 'normal') {
-                    snapshot = await db.collection('leaderboard')
-                        .where('difficulty', 'in', ['normal_12', 'normal'])
-                        .get();
-                } else {
-                    snapshot = await db.collection('leaderboard')
-                        .where('difficulty', '==', difficulty)
-                        .get();
-                }
-
+                const snapshot = await db.collection('leaderboard').get();
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     const item = { id: doc.id, ...data };
@@ -658,21 +637,39 @@ class Game {
         const localSaved = JSON.parse(localStorage.getItem('number_chain_leaderboard') || '[]');
         localSaved.forEach(localItem => {
             if (this.isMatchingDifficulty(localItem, difficulty)) {
-                if (!list.some(item => (item.id === localItem.id) || (item.name === localItem.name && item.score === localItem.score))) {
+                if (!list.some(item => (item.id && item.id === localItem.id) || (item.name === localItem.name && item.score === localItem.score))) {
                     list.push(localItem);
                 }
             }
         });
 
-        // 3) Default Mock Data if still empty
+        // 3) Default Preset Leaderboard Data (김홍년 선생님 & 명예의 전당)
         if (list.length === 0) {
-            list = [
-                { id: 'mock1', name: '수학 천재', score: 24500, maxCombo: 5 },
-                { id: 'mock2', name: '암산왕 철수', score: 18900, maxCombo: 4 },
-                { id: 'mock3', name: '초등 퍼즐러', score: 15200, maxCombo: 3 },
-                { id: 'mock4', name: '넘버 챔피언', score: 12000, maxCombo: 3 },
-                { id: 'mock5', name: '도전왕 영희', score: 10500, maxCombo: 2 }
-            ];
+            if (difficulty === 'easy') {
+                list = [
+                    { id: 'preset_e1', name: '김홍년 선생님', score: 38500, maxCombo: 8 },
+                    { id: 'preset_e2', name: '수학 천재', score: 24500, maxCombo: 5 },
+                    { id: 'preset_e3', name: '암산왕 철수', score: 18900, maxCombo: 4 },
+                    { id: 'preset_e4', name: '초등 퍼즐러', score: 15200, maxCombo: 3 },
+                    { id: 'preset_e5', name: '넘버 챔피언', score: 12000, maxCombo: 3 }
+                ];
+            } else if (difficulty === 'normal') {
+                list = [
+                    { id: 'preset_n1', name: '김홍년 선생님', score: 42000, maxCombo: 9 },
+                    { id: 'preset_n2', name: '암산 마스터', score: 28400, maxCombo: 6 },
+                    { id: 'preset_n3', name: '수식 퍼즐왕', score: 21500, maxCombo: 4 },
+                    { id: 'preset_n4', name: '콤보 매니아', score: 16800, maxCombo: 4 },
+                    { id: 'preset_n5', name: '도전왕 영희', score: 13200, maxCombo: 3 }
+                ];
+            } else if (difficulty === 'hard') {
+                list = [
+                    { id: 'preset_h1', name: '김홍년 선생님', score: 56000, maxCombo: 12 },
+                    { id: 'preset_h2', name: '퍼즐의 신', score: 39800, maxCombo: 8 },
+                    { id: 'preset_h3', name: '수학 전설', score: 31200, maxCombo: 7 },
+                    { id: 'preset_h4', name: '스피드 암산', score: 24500, maxCombo: 5 },
+                    { id: 'preset_h5', name: '하드코어 러너', score: 19000, maxCombo: 4 }
+                ];
+            }
         }
 
         // Sort descending by score & limit 50
