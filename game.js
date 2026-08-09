@@ -482,11 +482,13 @@ class Game {
     async submitLeaderboardScore() {
         const input = document.getElementById('leaderboard-name-input');
         const name = (input.value || '').trim() || '무명 퍼즐왕';
+        const saveDiff = (this.difficulty === 'normal') ? 'normal_12' : this.difficulty;
         const newRecord = {
             id: 'local_' + Date.now(),
             name: name,
             score: this.score,
-            difficulty: this.difficulty,
+            difficulty: saveDiff,
+            targetSum: this.targetSum,
             maxCombo: this.maxCombo,
             clearCount: this.clearCount,
             createdAt: new Date().toISOString()
@@ -503,7 +505,8 @@ class Game {
                 await db.collection('leaderboard').add({
                     name: name,
                     score: this.score,
-                    difficulty: this.difficulty,
+                    difficulty: saveDiff,
+                    targetSum: this.targetSum,
                     maxCombo: this.maxCombo,
                     clearCount: this.clearCount,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -583,6 +586,32 @@ class Game {
         this.renderLeaderboardTable(diff);
     }
 
+    isMatchingDifficulty(item, targetDiff) {
+        const itemDiff = item.difficulty;
+        const targetSum = item.targetSum;
+
+        if (targetDiff === 'easy') {
+            // 'easy' (합 10) matches: explicit 'easy', legacy 'normal' (sum 10), or undefined difficulty
+            if (itemDiff === 'easy') return true;
+            if (!itemDiff || itemDiff === 'practice') return true;
+            if (itemDiff === 'normal' && (targetSum === 10 || !targetSum)) return true;
+            return false;
+        }
+
+        if (targetDiff === 'normal') {
+            // new 'normal' (합 12) matches: 'normal_12' or 'normal' with targetSum === 12
+            if (itemDiff === 'normal_12') return true;
+            if (itemDiff === 'normal' && targetSum === 12) return true;
+            return false;
+        }
+
+        if (targetDiff === 'hard') {
+            return itemDiff === 'hard';
+        }
+
+        return false;
+    }
+
     async renderLeaderboardTable(difficulty = 'easy') {
         if (difficulty === 'practice') difficulty = 'easy';
         const tbody = document.getElementById('leaderboard-tbody');
@@ -599,14 +628,26 @@ class Game {
         // 1) Fetch from Firestore if connected
         try {
             if (typeof db !== 'undefined' && db) {
-                const snapshot = await db.collection('leaderboard')
-                    .where('difficulty', '==', difficulty)
-                    .orderBy('score', 'desc')
-                    .limit(50)
-                    .get();
+                let snapshot;
+                if (difficulty === 'easy') {
+                    // Fetch all to ensure legacy records without targetSum are preserved
+                    snapshot = await db.collection('leaderboard').get();
+                } else if (difficulty === 'normal') {
+                    snapshot = await db.collection('leaderboard')
+                        .where('difficulty', 'in', ['normal_12', 'normal'])
+                        .get();
+                } else {
+                    snapshot = await db.collection('leaderboard')
+                        .where('difficulty', '==', difficulty)
+                        .get();
+                }
 
                 snapshot.forEach(doc => {
-                    list.push({ id: doc.id, ...doc.data() });
+                    const data = doc.data();
+                    const item = { id: doc.id, ...data };
+                    if (this.isMatchingDifficulty(item, difficulty)) {
+                        list.push(item);
+                    }
                 });
             }
         } catch (e) {
@@ -614,12 +655,12 @@ class Game {
         }
 
         // 2) Merge with localStorage records
-        const localSaved = JSON.parse(localStorage.getItem('number_chain_leaderboard') || '[]')
-            .filter(item => item.difficulty === difficulty);
-
+        const localSaved = JSON.parse(localStorage.getItem('number_chain_leaderboard') || '[]');
         localSaved.forEach(localItem => {
-            if (!list.some(item => item.name === localItem.name && item.score === localItem.score)) {
-                list.push(localItem);
+            if (this.isMatchingDifficulty(localItem, difficulty)) {
+                if (!list.some(item => (item.id === localItem.id) || (item.name === localItem.name && item.score === localItem.score))) {
+                    list.push(localItem);
+                }
             }
         });
 
