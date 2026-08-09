@@ -654,12 +654,22 @@ class Game {
             ];
         }
 
-        // Sort descending by score & limit 50
-        list.sort((a, b) => b.score - a.score);
-        list = list.slice(0, 50);
+        // 4) Deduplicate by name: Keep only the single highest score per player
+        const bestScoreByName = new Map();
+        list.forEach(item => {
+            const nameKey = (item.name || '').trim();
+            if (!nameKey) return;
+            if (!bestScoreByName.has(nameKey) || item.score > bestScoreByName.get(nameKey).score) {
+                bestScoreByName.set(nameKey, item);
+            }
+        });
+
+        let uniqueList = Array.from(bestScoreByName.values());
+        uniqueList.sort((a, b) => b.score - a.score);
+        uniqueList = uniqueList.slice(0, 50);
 
         tbody.innerHTML = '';
-        list.forEach((item, index) => {
+        uniqueList.forEach((item, index) => {
             const rank = index + 1;
             let rankClass = '';
             let rankBadge = `${rank}위`;
