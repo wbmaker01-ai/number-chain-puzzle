@@ -138,9 +138,9 @@ class Game {
         this.sound = new SoundEngine();
 
         // Game Options & Difficulty
-        this.difficulty = 'easy'; // 'easy' (sum=10, 1~5), 'normal' (sum=10, 1~9), 'hard' (sum=15, 1~9)
+        this.difficulty = 'easy'; // 'practice' (sum=10, 1~5), 'easy' (sum=10, 1~9), 'normal' (sum=12, 1~9), 'hard' (sum=20, 1~9)
         this.targetSum = 10;
-        this.maxNum = 5;
+        this.maxNum = 9;
         this.showHint = true;
 
         // Board Matrix: ROWS x COLS (null or { num, clearing, animOffset })
@@ -175,14 +175,18 @@ class Game {
 
     setDifficulty(diff) {
         this.difficulty = diff;
-        if (diff === 'easy') {
+        if (diff === 'practice') {
             this.targetSum = 10;
             this.maxNum = 5;
             this.baseDropInterval = 800;
-        } else if (diff === 'normal') {
+        } else if (diff === 'easy') {
             this.targetSum = 10;
             this.maxNum = 9;
             this.baseDropInterval = 750;
+        } else if (diff === 'normal') {
+            this.targetSum = 12;
+            this.maxNum = 9;
+            this.baseDropInterval = 700;
         } else if (diff === 'hard') {
             this.targetSum = 20;
             this.maxNum = 9;
@@ -376,8 +380,8 @@ class Game {
         this.state = 'GAMEOVER';
         this.sound.playGameOver();
 
-        // 보통/매운맛 모드에서 10,000점 이상 달성 시 리더보드 등록 팝업 오픈
-        if ((this.difficulty === 'normal' || this.difficulty === 'hard') && this.score >= 10000) {
+        // 모든 난이도에서 10,000점 이상 달성 시 리더보드 등록 팝업 오픈
+        if (this.score >= 10000) {
             document.getElementById('register-leaderboard-overlay').classList.remove('hidden');
         } else {
             this.showGameOverModal();
@@ -443,19 +447,21 @@ class Game {
         this.openLeaderboard(this.difficulty);
     }
 
-    openLeaderboard(defaultDiff = 'normal') {
+    openLeaderboard(defaultDiff = null) {
         const modal = document.getElementById('leaderboard-modal');
         modal.classList.remove('hidden');
 
+        const activeDiff = defaultDiff || this.difficulty || 'easy';
+
         document.querySelectorAll('.lb-tab-btn').forEach(btn => {
-            if (btn.dataset.tab === defaultDiff) {
+            if (btn.dataset.tab === activeDiff) {
                 btn.classList.add('active');
             } else {
                 btn.classList.remove('active');
             }
         });
 
-        this.renderLeaderboardTable(defaultDiff);
+        this.renderLeaderboardTable(activeDiff);
     }
 
     closeLeaderboard() {
@@ -478,7 +484,7 @@ class Game {
             this.isAdminMode = true;
             document.getElementById('admin-auth-overlay').classList.add('hidden');
             alert('🔓 관리자 인증에 성공했습니다! 리더보드 데이터 개별 삭제 권한이 활성화되었습니다.');
-            this.openLeaderboard(this.difficulty || 'normal');
+            this.openLeaderboard(this.difficulty || 'easy');
         } else {
             alert('❌ 비밀번호가 올바르지 않습니다.');
         }
@@ -504,7 +510,7 @@ class Game {
         this.renderLeaderboardTable(diff);
     }
 
-    async renderLeaderboardTable(difficulty = 'normal') {
+    async renderLeaderboardTable(difficulty = 'easy') {
         const tbody = document.getElementById('leaderboard-tbody');
         tbody.innerHTML = '<tr><td colspan="5">⏳ 랭킹 데이터 불러오는 중...</td></tr>';
 
@@ -776,8 +782,8 @@ class Game {
             // Wait after clear
             await this.sleep(200);
 
-            // Check Tutorial Clear condition for Practice Mode (easy)
-            if (this.difficulty === 'easy' && this.score >= 10000) {
+            // Check Tutorial Clear condition for Practice Mode (practice)
+            if (this.difficulty === 'practice' && this.score >= 10000) {
                 this.gameClearTutorial();
                 return;
             }
@@ -786,7 +792,7 @@ class Game {
             await this.processChains(comboCount + 1);
         } else {
             // Check Tutorial Clear condition before spawning next piece
-            if (this.difficulty === 'easy' && this.score >= 10000) {
+            if (this.difficulty === 'practice' && this.score >= 10000) {
                 this.gameClearTutorial();
                 return;
             }
@@ -817,42 +823,51 @@ class Game {
         const matchedKeys = new Set();
         const matches = [];
 
-        const dfs = (r, c, currentPath, currentSum) => {
-            if (currentSum === this.targetSum && currentPath.length >= 2) {
-                currentPath.forEach(p => {
-                    const key = `${p.r},${p.c}`;
-                    if (!matchedKeys.has(key)) {
-                        matchedKeys.add(key);
-                        matches.push({ r: p.r, c: p.c });
-                    }
-                });
-                return;
-            }
-
-            if (currentSum > this.targetSum) {
-                return;
-            }
-
-            const neighbors = [
-                { r: r - 1, c: c },
-                { r: r + 1, c: c },
-                { r: r, c: c - 1 },
-                { r: r, c: c + 1 }
-            ];
-
-            for (let n of neighbors) {
-                if (n.r >= 0 && n.r < ROWS && n.c >= 0 && n.c < COLS && this.grid[n.r][n.c] !== null) {
-                    if (!currentPath.some(p => p.r === n.r && p.c === n.c)) {
-                        dfs(n.r, n.c, [...currentPath, { r: n.r, c: n.c }], currentSum + this.grid[n.r][n.c].num);
-                    }
-                }
-            }
-        };
+        // 4 Straight directional vectors: Horizontal, Vertical, Diagonal(↘), Diagonal(↙)
+        const dirs = [
+            { dr: 0, dc: 1 },  // 가로 (Horizontal)
+            { dr: 1, dc: 0 },  // 세로 (Vertical)
+            { dr: 1, dc: 1 },  // 대각선 (↘ Down-Right)
+            { dr: 1, dc: -1 }  // 대각선 (↙ Down-Left)
+        ];
 
         for (let r = 0; r < ROWS; r++) {
             for (let c = 0; c < COLS; c++) {
-                if (this.grid[r][c] !== null) {
-                    dfs(r, c, [{ r, c }], this.grid[r][c].num);
+                if (this.grid[r][c] === null) continue;
+
+                for (let d of dirs) {
+                    let currentSum = 0;
+                    const path = [];
+
+                    let currR = r;
+                    let currC = c;
+
+                    while (
+                        currR >= 0 && currR < ROWS &&
+                        currC >= 0 && currC < COLS &&
+                        this.grid[currR][currC] !== null
+                    ) {
+                        currentSum += this.grid[currR][currC].num;
+                        path.push({ r: currR, c: currC });
+
+                        if (currentSum === this.targetSum && path.length >= 2) {
+                            path.forEach(p => {
+                                const key = `${p.r},${p.c}`;
+                                if (!matchedKeys.has(key)) {
+                                    matchedKeys.add(key);
+                                    matches.push({ r: p.r, c: p.c });
+                                }
+                            });
+                            break;
+                        }
+
+                        if (currentSum > this.targetSum) {
+                            break;
+                        }
+
+                        currR += d.dr;
+                        currC += d.dc;
+                    }
                 }
             }
         }

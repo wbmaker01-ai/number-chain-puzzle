@@ -77,13 +77,17 @@
                             <div class="difficulty-selector">
                                 <label>난이도 선택:</label>
                                 <div class="diff-buttons">
-                                    <button class="diff-btn active" data-diff="easy">
+                                    <button class="diff-btn" data-diff="practice">
                                         <span class="diff-title">🟢 연습 게임</span>
                                         <span class="diff-desc">합 10 (숫자 1~5, 1만점 목표)</span>
                                     </button>
+                                    <button class="diff-btn active" data-diff="easy">
+                                        <span class="diff-title">🟢 쉬움</span>
+                                        <span class="diff-desc">합 10 (숫자 1~9)</span>
+                                    </button>
                                     <button class="diff-btn" data-diff="normal">
                                         <span class="diff-title">🟡 보통</span>
-                                        <span class="diff-desc">합 10 (숫자 1~9)</span>
+                                        <span class="diff-desc">합 12 (숫자 1~9)</span>
                                     </button>
                                     <button class="diff-btn" data-diff="hard">
                                         <span class="diff-title">🔴 매운맛</span>
@@ -136,7 +140,9 @@
                         <div class="overlay-content leaderboard-content">
                             <h2><span id="admin-trophy-trigger" style="cursor:pointer;" title="히든 관리자">🏆</span> 명예의 전당<br>(Top 50)</h2>
                             <div class="leaderboard-tab-buttons">
-                                <button class="lb-tab-btn active" data-tab="normal">🟡 보통맛</button>
+                                <button class="lb-tab-btn" data-tab="practice">🟢 연습</button>
+                                <button class="lb-tab-btn active" data-tab="easy">🟢 쉬움</button>
+                                <button class="lb-tab-btn" data-tab="normal">🟡 보통</button>
                                 <button class="lb-tab-btn" data-tab="hard">🔴 매운맛</button>
                             </div>
                             <div class="leaderboard-table-wrapper">
