@@ -643,33 +643,15 @@ class Game {
             }
         });
 
-        // 3) Default Preset Leaderboard Data (김홍년 선생님 & 명예의 전당)
+        // 3) Default Preset Leaderboard Data (테스트용 샘플 데이터)
         if (list.length === 0) {
-            if (difficulty === 'easy') {
-                list = [
-                    { id: 'preset_e1', name: '김홍년 선생님', score: 38500, maxCombo: 8 },
-                    { id: 'preset_e2', name: '수학 천재', score: 24500, maxCombo: 5 },
-                    { id: 'preset_e3', name: '암산왕 철수', score: 18900, maxCombo: 4 },
-                    { id: 'preset_e4', name: '초등 퍼즐러', score: 15200, maxCombo: 3 },
-                    { id: 'preset_e5', name: '넘버 챔피언', score: 12000, maxCombo: 3 }
-                ];
-            } else if (difficulty === 'normal') {
-                list = [
-                    { id: 'preset_n1', name: '김홍년 선생님', score: 42000, maxCombo: 9 },
-                    { id: 'preset_n2', name: '암산 마스터', score: 28400, maxCombo: 6 },
-                    { id: 'preset_n3', name: '수식 퍼즐왕', score: 21500, maxCombo: 4 },
-                    { id: 'preset_n4', name: '콤보 매니아', score: 16800, maxCombo: 4 },
-                    { id: 'preset_n5', name: '도전왕 영희', score: 13200, maxCombo: 3 }
-                ];
-            } else if (difficulty === 'hard') {
-                list = [
-                    { id: 'preset_h1', name: '김홍년 선생님', score: 56000, maxCombo: 12 },
-                    { id: 'preset_h2', name: '퍼즐의 신', score: 39800, maxCombo: 8 },
-                    { id: 'preset_h3', name: '수학 전설', score: 31200, maxCombo: 7 },
-                    { id: 'preset_h4', name: '스피드 암산', score: 24500, maxCombo: 5 },
-                    { id: 'preset_h5', name: '하드코어 러너', score: 19000, maxCombo: 4 }
-                ];
-            }
+            list = [
+                { id: 'mock1', name: '수학 천재', score: 24500, maxCombo: 5 },
+                { id: 'mock2', name: '암산왕 철수', score: 18900, maxCombo: 4 },
+                { id: 'mock3', name: '초등 퍼즐러', score: 15200, maxCombo: 3 },
+                { id: 'mock4', name: '넘버 챔피언', score: 12000, maxCombo: 3 },
+                { id: 'mock5', name: '도전왕 영희', score: 10500, maxCombo: 2 }
+            ];
         }
 
         // Sort descending by score & limit 50
