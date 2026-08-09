@@ -380,8 +380,8 @@ class Game {
         this.state = 'GAMEOVER';
         this.sound.playGameOver();
 
-        // 모든 난이도에서 10,000점 이상 달성 시 리더보드 등록 팝업 오픈
-        if (this.score >= 10000) {
+        // 연습 게임 제외, 쉬움/보통/매운맛 모드에서 10,000점 이상 달성 시 리더보드 등록 팝업 오픈
+        if (this.difficulty !== 'practice' && this.score >= 10000) {
             document.getElementById('register-leaderboard-overlay').classList.remove('hidden');
         } else {
             this.showGameOverModal();
@@ -451,7 +451,8 @@ class Game {
         const modal = document.getElementById('leaderboard-modal');
         modal.classList.remove('hidden');
 
-        const activeDiff = defaultDiff || this.difficulty || 'easy';
+        let activeDiff = defaultDiff || this.difficulty || 'easy';
+        if (activeDiff === 'practice') activeDiff = 'easy';
 
         document.querySelectorAll('.lb-tab-btn').forEach(btn => {
             if (btn.dataset.tab === activeDiff) {
@@ -511,6 +512,7 @@ class Game {
     }
 
     async renderLeaderboardTable(difficulty = 'easy') {
+        if (difficulty === 'practice') difficulty = 'easy';
         const tbody = document.getElementById('leaderboard-tbody');
         tbody.innerHTML = '<tr><td colspan="5">⏳ 랭킹 데이터 불러오는 중...</td></tr>';
 
