@@ -303,16 +303,76 @@ class Game {
         // Keyboard Controls
         window.addEventListener('keydown', (e) => this.handleKeyDown(e));
 
-        // Touch Controls
-        document.getElementById('tbtn-left').addEventListener('click', () => this.movePiece(-1, 0));
-        document.getElementById('tbtn-right').addEventListener('click', () => this.movePiece(1, 0));
-        document.getElementById('tbtn-down').addEventListener('click', () => this.softDrop());
-        document.getElementById('tbtn-drop').addEventListener('click', () => this.hardDrop());
-        document.getElementById('tbtn-rot-left').addEventListener('click', () => this.rotatePiece(-1));
-        document.getElementById('tbtn-rot-right').addEventListener('click', () => this.rotatePiece(1));
+        // Touch & Tablet Controls (Instant tap & continuous holding support)
+        this.bindTouchControl('tbtn-left', () => this.movePiece(-1, 0), 90);
+        this.bindTouchControl('tbtn-right', () => this.movePiece(1, 0), 90);
+        this.bindTouchControl('tbtn-down', () => this.softDrop(), 80);
+        this.bindTouchControl('tbtn-drop', () => this.hardDrop(), 0);
+        this.bindTouchControl('tbtn-rot-left', () => this.rotatePiece(-1), 0);
+        this.bindTouchControl('tbtn-rot-right', () => this.rotatePiece(1), 0);
+
+        const floatHomeBtn = document.getElementById('btn-home-floating');
+        if (floatHomeBtn) floatHomeBtn.style.display = 'none';
 
         // Start Game Loop Animation
         requestAnimationFrame((time) => this.gameLoop(time));
+    }
+
+    bindTouchControl(btnId, actionFn, repeatInterval = 90) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+
+        let timer = null;
+        let isHolding = false;
+
+        const stopAction = (e) => {
+            if (e && e.cancelable) e.preventDefault();
+            isHolding = false;
+            if (timer) {
+                clearTimeout(timer);
+                clearInterval(timer);
+                timer = null;
+            }
+        };
+
+        const startAction = (e) => {
+            if (e) {
+                if (e.cancelable) e.preventDefault();
+                e.stopPropagation();
+            }
+            if (this.state !== 'PLAYING') return;
+
+            actionFn();
+
+            if (repeatInterval > 0) {
+                isHolding = true;
+                if (timer) {
+                    clearTimeout(timer);
+                    clearInterval(timer);
+                }
+
+                timer = setTimeout(() => {
+                    if (isHolding && this.state === 'PLAYING') {
+                        timer = setInterval(() => {
+                            if (isHolding && this.state === 'PLAYING') {
+                                actionFn();
+                            } else {
+                                stopAction();
+                            }
+                        }, repeatInterval);
+                    }
+                }, 180);
+            }
+        };
+
+        btn.addEventListener('pointerdown', startAction);
+        btn.addEventListener('pointerup', stopAction);
+        btn.addEventListener('pointercancel', stopAction);
+        btn.addEventListener('pointerleave', stopAction);
+
+        btn.addEventListener('touchstart', startAction, { passive: false });
+        btn.addEventListener('touchend', stopAction);
+        btn.addEventListener('touchcancel', stopAction);
     }
 
     generateRandomPiece() {
@@ -351,6 +411,9 @@ class Game {
         document.getElementById('pause-overlay').classList.add('hidden');
         document.getElementById('gameover-overlay').classList.add('hidden');
 
+        const floatHomeBtn = document.getElementById('btn-home-floating');
+        if (floatHomeBtn) floatHomeBtn.style.display = 'flex';
+
         this.state = 'PLAYING';
         this.lastDropTime = performance.now();
         this.drawNextPiece();
@@ -365,6 +428,9 @@ class Game {
         document.getElementById('pause-overlay').classList.add('hidden');
         document.getElementById('gameover-overlay').classList.add('hidden');
         document.getElementById('start-overlay').classList.remove('hidden');
+
+        const floatHomeBtn = document.getElementById('btn-home-floating');
+        if (floatHomeBtn) floatHomeBtn.style.display = 'none';
     }
 
     togglePause() {
@@ -1141,6 +1207,8 @@ class Game {
 }
 
 // Instantiate and Run when DOM loaded
-window.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+    window.addEventListener('DOMContentLoaded', () => { window.game = new Game(); });
+} else {
     window.game = new Game();
-});
+}
